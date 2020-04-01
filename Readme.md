@@ -15,17 +15,12 @@ Coroutines Cache works only on `kotlin-coroutines:0.26.0` and above.
 
 * zip() - combine items from two Deferreds together via a specified function and return items based on the results of this function
 * zipWith() - instance version of zip()
-* filter() - filter items in Deferred
 * map() - transform the items from Deferred by applying some function
 * flatMap() - transform the Collection items in Deferred into Deferreds, then flatten this into a single Collection
 * concatMap() - transform the Collection items in Deferred into Deferreds, then flatten this into a single Collection, without interleaving
-* retryDeferredWithDelay() - try to await result of Deferred, if it fails, then retry with custom delay.
 
 ### ReceiverChannels
 
-* asyncFlatMap() - transform the items, emitted in Channel into Deferreds, then flatten this into a single Channel
-* asyncConcatMap() -  transform the items, emitted in Channel into Deferreds, then flatten this into a single Channel, without interleaving
-* asyncMap() - transform the items, emitted in Channel, by applying some function
 * distinctUntilChanged() - suppress duplicate consecutive items emitted by the ReceiverChannel
 * reduce() - apply a function to each emitted item, sequentially, and emit only the final accumulated value
 * concat() - concatenate two ReceiverChannels sequentially
@@ -97,48 +92,6 @@ Transform the Collection items in Deferred into Deferreds, then flatten this int
     println("Working time is ${System.currentTimeMillis() - time}")
     // prints [2, 4, 6, 8, 10] Working time is 4303
 ```
-
-### asyncFlatMap
-
-Transform the items, emitted in Channel into Deferreds, then flatten this into a single Channel
-
-```kotlin
-    val time = System.currentTimeMillis()
-    val list = listOf(1, 2, 3, 4)
-    val result = list.asReceiveChannel().asyncFlatMap(mapper = {
-        Thread.sleep(5000 - it * 1000L)
-        listOf(it * 2).asReceiveChannel()
-    }).toList()
-    println(result)
-    print("Working time ${System.currentTimeMillis() - time}")
-    // prints [6, 4, 8, 2] Working time 4167
-```
-
-### asyncConcatMap
-
-Transform the items, emitted in Channel into Deferreds, then flatten this into a single Channel, without interleaving
-
-```kotlin
-    val time = System.currentTimeMillis()
-    val list = listOf(1, 2, 3, 4)
-    val result = list.asReceiveChannel().asyncFlatMap(mapper = {
-        Thread.sleep(5000 - it * 1000L)
-        listOf(it * 2).asReceiveChannel()
-    }).toList()
-    println(result)
-    print("Working time ${System.currentTimeMillis() - time}")
-    // [2, 4, 6, 8] Working time 4222
-```
-### asyncMap
-
-Transform the items, emitted in Channel, by applying some function
-
-```kotlin
-    val list = listOf(1, 2, 3, 4)
-    print(list.asReceiveChannel().asyncMap(mapper = { it * 2 }).toList())
-    // prints [2, 4, 6, 8]
-```
-
 
 ### distinctUntilChanged
 
