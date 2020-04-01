@@ -1,36 +1,40 @@
 package com.epam.coroutinesextensions.coroutinesoperators
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
 import kotlin.coroutines.CoroutineContext
 
 
-suspend fun <T> ReceiveChannel<T>.distinctUntilChanged(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<T> =
-        coroutineScope {
-            produce(context) {
-                var prev: T? = null
+suspend fun <T> ReceiveChannel<T>.distinctUntilChanged(
+        context: CoroutineContext = Dispatchers.Unconfined,
+        scope: CoroutineScope = GlobalScope): ReceiveChannel<T> =
+        scope.produce(context) {
+            var prev: T? = null
 
-                consumeEach {
-                    if (it != prev) {
-                        send(it)
-                        prev = it
-                    }
+            consumeEach {
+                if (it != prev) {
+                    send(it)
+                    prev = it
                 }
             }
         }
 
 suspend fun <T> ReceiveChannel<T>.distinctUntilChanged(context: CoroutineContext = Dispatchers.Unconfined,
+                                                       scope: CoroutineScope = GlobalScope,
                                                        comparator: (T, T) -> Boolean): ReceiveChannel<T> =
-        coroutineScope {
-            produce(context) {
-                var prev: T = receive()
-                send(prev)
+        scope.produce(context) {
+            var prev: T = receive()
+            send(prev)
 
-                consumeEach { it ->
-                    if (!comparator(it, prev)) {
-                        send(it)
-                        prev = it
-                    }
+            consumeEach { it ->
+                if (!comparator(it, prev)) {
+                    send(it)
+                    prev = it
                 }
             }
         }
@@ -84,7 +88,7 @@ fun <T> ReceiveChannel<T>.debounce(
 ): ReceiveChannel<T> = scope.produce(context) {
     var nextTime = 0L
     consumeEach {
-        val curTime = java.lang.System.currentTimeMillis()
+        val curTime: Long = java.lang.System.currentTimeMillis()
         if (curTime < nextTime) {
             // not enough time passed from last send
             delay(nextTime - curTime)
@@ -101,4 +105,10 @@ fun <T> ReceiveChannel<T>.debounce(
         }
     }
 }
+
+fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
+        GlobalScope.produce(context) {
+            for (element in this@asReceiveChannel)
+                send(element)
+        }
 
